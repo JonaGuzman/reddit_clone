@@ -14,6 +14,20 @@ class PostList(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(poster=self.request.user)
 
+class PostRetrieveDestroy(generics.RetrieveDestroyAPIView):
+    """ Class based view listing info"""
+    queryset = Post.objects.all() # looking to pull from DB
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def delete(self, request, *args, **kwargs):
+        post = Post.objects.filter(pk=kwargs['pk'], poster=self.request.user)
+        if post.exists():
+            return self.destroy(request, *args, **kwargs)
+        else:
+            raise ValidationError('This isn\'t your post to delete')
+
+
 class VoteCreate(generics.CreateAPIView, mixins.DestroyModelMixin):
     """ Class based view listing info"""
     serializer_class = VoteSerializer
@@ -35,3 +49,4 @@ class VoteCreate(generics.CreateAPIView, mixins.DestroyModelMixin):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             raise ValidationError('You never voted for this post!')
+
